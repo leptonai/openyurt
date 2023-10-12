@@ -191,10 +191,17 @@ func (r *ReconcileGateway) Reconcile(ctx context.Context, req reconcile.Request)
 			klog.ErrorS(err, "unable to get podCIDR")
 			return reconcile.Result{}, err
 		}
+		publicIP := ""
+		publicIP, err = utils.GetLeptonSatelliteNodePublicIP(v)
+		if err != nil {
+			klog.ErrorS(err, "unable to get node public IP")
+			return reconcile.Result{}, err
+		}
 		nodes = append(nodes, ravenv1beta1.NodeInfo{
 			NodeName:  v.Name,
 			PrivateIP: utils.GetNodeInternalIP(v),
 			Subnets:   podCIDRs,
+			PublicIP:  publicIP,
 		})
 	}
 	sort.Slice(nodes, func(i, j int) bool { return nodes[i].NodeName < nodes[j].NodeName })

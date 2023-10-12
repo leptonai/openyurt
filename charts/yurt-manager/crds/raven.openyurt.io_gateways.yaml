@@ -285,7 +285,10 @@ spec:
                         description: NodeName is the Node host name.
                         type: string
                       privateIP:
-                        description: PrivateIP is the node private ip address
+                        description: PrivateIP is the node private ip address in lepton cluster
+                        type: string
+                      publicIP:
+                        description: 'Node PublicIP: satellite nodes need to build vxlan connctions using their public IPs;'
                         type: string
                       subnets:
                         description: Subnets is the pod ip range of the node
@@ -295,6 +298,7 @@ spec:
                     required:
                       - nodeName
                       - privateIP
+                      - publicIP
                       - subnets
                     type: object
                   type: array
