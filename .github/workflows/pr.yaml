@@ -1,0 +1,16 @@
+name: pr
+
+on:
+  pull_request:
+    paths:
+      - "**"
+    branches: ["**"]
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-docker-image.yaml
+    secrets: inherit
+    with:
+      folder: ./
+      repo: raven-manager
+

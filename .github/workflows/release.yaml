@@ -1,0 +1,17 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-docker-image.yaml
+    secrets: inherit
+    with:
+      folder: ./
+      repo: raven-manager
+      tag: ${GITHUB_REF##*/}
+      commit: ${GITHUB_REF##*/}
+

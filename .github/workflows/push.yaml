@@ -1,0 +1,22 @@
+name: push
+
+on:
+  push:
+    paths:
+      - "**"
+    branches: ["main"]
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-docker-image.yaml
+    secrets: inherit
+    with:
+      folder: ./
+      repo: raven-manager
+      tag: latest
+
+
+
+
+
+
