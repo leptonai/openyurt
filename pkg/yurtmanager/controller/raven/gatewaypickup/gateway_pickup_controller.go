@@ -194,8 +194,7 @@ func (r *ReconcileGateway) Reconcile(ctx context.Context, req reconcile.Request)
 		publicIP := ""
 		publicIP, err = utils.GetEdgeeNodePublicIP(v)
 		if err != nil {
-			klog.ErrorS(err, "unable to get node public IP")
-			return reconcile.Result{}, err
+			klog.InfoS("unable to get node public IP, expecting nodes to communicate via private IPs: " + err.Error())
 		}
 		nodes = append(nodes, ravenv1beta1.NodeInfo{
 			NodeName:  v.Name,
