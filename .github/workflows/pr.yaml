@@ -3,7 +3,12 @@ name: pr
 on:
   pull_request:
     paths:
-      - "**"
+      - ".github/workflows/pr.yaml"
+      - ".github/workflows/build-docer-image.yaml"
+      - "pkg/**"
+      - "cmd/**"
+      - "charts/**"
+      - "hack/dockerfiles/**"
     branches: ["**"]
 
 jobs:
@@ -11,6 +16,6 @@ jobs:
     uses: ./.github/workflows/build-docker-image.yaml
     secrets: inherit
     with:
-      folder: ./
+      dockerfile: "hack/dockerfiles/release/Dockerfile.yurt-manager"
       repo: raven-manager
 

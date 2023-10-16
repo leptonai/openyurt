@@ -10,7 +10,7 @@ jobs:
     uses: ./.github/workflows/build-docker-image.yaml
     secrets: inherit
     with:
-      folder: ./
+      dockerfile: "hack/dockerfiles/release/Dockerfile.yurt-manager"
       repo: raven-manager
       tag: ${GITHUB_REF##*/}
       commit: ${GITHUB_REF##*/}
