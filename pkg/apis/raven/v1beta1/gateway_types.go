@@ -101,7 +101,7 @@ type NodeInfo struct {
 	Subnets []string `json:"subnets"`
 	// Node PublicIP: satellite nodes need to build vxlan connctions
 	// using their public IPs;
-	PublicIP string `json:"publicIP"`
+	PublicIP string `json:"publicIP,omitempty"`
 }
 
 // GatewayStatus defines the observed state of Gateway

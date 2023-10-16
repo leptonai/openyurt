@@ -298,7 +298,6 @@ spec:
                     required:
                       - nodeName
                       - privateIP
-                      - publicIP
                       - subnets
                     type: object
                   type: array
