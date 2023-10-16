@@ -80,7 +80,7 @@ spec:
           command:
             - /usr/local/bin/yurt-manager
           image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: yurt-manager
           ports:
             - containerPort: {{ .Values.ports.webhook }}

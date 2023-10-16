@@ -54,6 +54,8 @@ const (
 	VPNServerExposedPortKey    = "tunnel-bind-addr"
 	RavenEnableProxy           = "enable-l7-proxy"
 	RavenEnableTunnel          = "enable-l3-tunnel"
+	DefaultEnableL7Proxy       = false
+	DefaultEnableL3Tunnel      = true
 )
 
 // GetNodeInternalIP returns internal ip of the given `node`.
@@ -91,8 +93,8 @@ func AddGatewayToWorkQueue(gwName string,
 
 func CheckServer(ctx context.Context, client client.Client) (enableProxy, enableTunnel bool) {
 	var cm corev1.ConfigMap
-	enableTunnel = false
-	enableProxy = false
+	enableTunnel = DefaultEnableL3Tunnel
+	enableProxy = DefaultEnableL7Proxy
 	err := client.Get(ctx, types.NamespacedName{Namespace: WorkingNamespace, Name: RavenGlobalConfig}, &cm)
 	if err != nil {
 		return enableProxy, enableTunnel
