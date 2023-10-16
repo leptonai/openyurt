@@ -7,7 +7,6 @@ on:
       - ".github/workflows/build-docer-image.yaml"
       - "pkg/**"
       - "cmd/**"
-      - "charts/**"
       - "hack/dockerfiles/**"
     branches: ["**"]
 

@@ -2,8 +2,6 @@ name: push
 
 on:
   push:
-    paths:
-      - "**"
     branches: ["main"]
 
 jobs:
@@ -11,7 +9,7 @@ jobs:
     uses: ./.github/workflows/build-docker-image.yaml
     secrets: inherit
     with:
-      folder: ./
+      dockerfile: "hack/dockerfiles/release/Dockerfile.yurt-manager"
       repo: raven-manager
       tag: latest
 

@@ -40,7 +40,7 @@ const (
 	WorkingNamespace               = "kube-system"
 	RavenGlobalConfig              = "raven-cfg"
 	LabelCurrentGatewayEndpoints   = "raven.openyurt.io/endpoints-name"
-	LabelLeptonSatellitePublicIP   = "lepton.ai/provider-public-ip"
+	LabelLeptonSatellitePublicIP   = "raven.openyurt.io/provider-public-ip"
 	GatewayProxyInternalService    = "x-raven-proxy-internal-svc"
 	GatewayProxyServiceNamePrefix  = "x-raven-proxy-svc"
 	GatewayTunnelServiceNamePrefix = "x-raven-tunnel-svc"
@@ -68,13 +68,13 @@ func GetNodeInternalIP(node corev1.Node) string {
 	return ip
 }
 
-func GetLeptonSatelliteNodePublicIP(node corev1.Node) (string, error) {
+func GetEdgeeNodePublicIP(node corev1.Node) (string, error) {
 	ip, ok := node.Labels[LabelLeptonSatellitePublicIP]
 	if !ok {
-		return "", fmt.Errorf("Failed to get public ip, no label %s on node %s", LabelLeptonSatellitePublicIP, node.Name)
+		return "", fmt.Errorf("failed to get public ip, no label %s on node %s", LabelLeptonSatellitePublicIP, node.Name)
 	}
 	if net.ParseIP(ip) == nil {
-		return "", fmt.Errorf("Failed to get public ip, invalid public IP label %s, %s on node %s", LabelLeptonSatellitePublicIP, ip, node.Name)
+		return "", fmt.Errorf("failed to get public ip, invalid public IP label %s, %s on node %s", LabelLeptonSatellitePublicIP, ip, node.Name)
 	}
 	return ip, nil
 }

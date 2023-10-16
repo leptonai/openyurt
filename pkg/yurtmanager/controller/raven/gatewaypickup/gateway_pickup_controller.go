@@ -192,7 +192,7 @@ func (r *ReconcileGateway) Reconcile(ctx context.Context, req reconcile.Request)
 			return reconcile.Result{}, err
 		}
 		publicIP := ""
-		publicIP, err = utils.GetLeptonSatelliteNodePublicIP(v)
+		publicIP, err = utils.GetEdgeeNodePublicIP(v)
 		if err != nil {
 			klog.ErrorS(err, "unable to get node public IP")
 			return reconcile.Result{}, err
