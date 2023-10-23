@@ -252,8 +252,11 @@ func (r *ReconcileGateway) electActiveEndpoint(nodeList corev1.NodeList, gw *rav
 	// get all ready nodes referenced by endpoints
 	readyNodes := make(map[string]*corev1.Node)
 	for _, v := range nodeList.Items {
-		if isNodeReady(v) {
-			readyNodes[v.Name] = &v
+		node := v
+		if isNodeReady(node) {
+			readyNodes[node.Name] = &node
+		} else {
+			klog.V(2).Infof("Skipping node %s, it's not in ready state", node.Name)
 		}
 	}
 	klog.V(1).Infof(Format("Ready node has %d", len(readyNodes)))
@@ -285,13 +288,15 @@ func electEndpoints(gw *ravenv1beta1.Gateway, endpointType string, readyNodes ma
 	}
 
 	checkCandidates := func(ep *ravenv1beta1.Endpoint) bool {
-		if _, ok := readyNodes[ep.NodeName]; ok && ep.Type == endpointType {
+		if node, ok := readyNodes[ep.NodeName]; ok && ep.Type == endpointType && utils.IsNodeEndpointCandidate(node) {
+			if _, ok := ep.Config[utils.ConfigCreationTimestampKey]; !ok {
+				ep.Config[utils.ConfigCreationTimestampKey] = fmt.Sprintf("%d", node.CreationTimestamp.Unix())
+			}
 			return true
 		}
 		return false
 	}
 
-	// the current active endpoint is still competent.
 	candidates := make(map[string]*ravenv1beta1.Endpoint, 0)
 	for _, activeEndpoint := range gw.Status.ActiveEndpoints {
 		if checkCandidates(activeEndpoint) {
@@ -302,7 +307,33 @@ func electEndpoints(gw *ravenv1beta1.Gateway, endpointType string, readyNodes ma
 			}
 		}
 	}
+
+	klog.V(1).Infof("Adding ready nodes to candidates")
+	for nodeName, node := range readyNodes {
+		_, ok := candidates[nodeName]
+		if ok {
+			continue
+		}
+		endpoint, err := utils.TryCreateActiveEndpointCandidate(node)
+		if err == nil {
+			klog.V(4).Infof("adding node %s as active endpoint candidate for gw %s", nodeName, gw.GetName())
+			if checkCandidates(endpoint) {
+				candidates[nodeName] = endpoint
+			}
+		} else {
+			klog.V(4).Infof("node %s cannot be an endpoint candidate: %s", nodeName, err.Error())
+		}
+	}
+
+	// When there are multiple candidates, using the newest one;
+	candidatesList := make([]*ravenv1beta1.Endpoint, 0)
 	for _, aep := range candidates {
+		candidatesList = append(candidatesList, aep)
+	}
+	sort.Slice(candidatesList, func(i, j int) bool {
+		return candidatesList[i].Config[utils.ConfigCreationTimestampKey] > candidatesList[j].Config[utils.ConfigCreationTimestampKey]
+	})
+	for _, aep := range candidatesList {
 		if len(eps) == replicas {
 			aepInfo, _ := getActiveEndpointsInfo(eps)
 			klog.V(4).InfoS(Format("elect %d active endpoints %s for gateway %s/%s",
@@ -314,6 +345,7 @@ func electEndpoints(gw *ravenv1beta1.Gateway, endpointType string, readyNodes ma
 		eps = append(eps, aep.DeepCopy())
 	}
 
+	// Then look for endpoints defined in spec
 	for _, ep := range gw.Spec.Endpoints {
 		if _, ok := candidates[ep.NodeName]; !ok && checkCandidates(&ep) {
 			if len(eps) == replicas {

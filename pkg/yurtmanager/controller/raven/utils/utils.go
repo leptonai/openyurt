@@ -27,6 +27,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/openyurtio/openyurt/pkg/apis/raven"
+	"github.com/openyurtio/openyurt/pkg/apis/raven/v1beta1"
+	ravenv1beta1 "github.com/openyurtio/openyurt/pkg/apis/raven/v1beta1"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -40,7 +43,6 @@ const (
 	WorkingNamespace               = "kube-system"
 	RavenGlobalConfig              = "raven-cfg"
 	LabelCurrentGatewayEndpoints   = "raven.openyurt.io/endpoints-name"
-	LabelNodeProviderPublicIP      = "raven.openyurt.io/provider-public-ip"
 	GatewayProxyInternalService    = "x-raven-proxy-internal-svc"
 	GatewayProxyServiceNamePrefix  = "x-raven-proxy-svc"
 	GatewayTunnelServiceNamePrefix = "x-raven-tunnel-svc"
@@ -56,6 +58,8 @@ const (
 	RavenEnableTunnel          = "enable-l3-tunnel"
 	DefaultEnableL7Proxy       = false
 	DefaultEnableL3Tunnel      = true
+
+	ConfigCreationTimestampKey = "config-creation-time"
 )
 
 // GetNodeInternalIP returns internal ip of the given `node`.
@@ -71,14 +75,42 @@ func GetNodeInternalIP(node corev1.Node) string {
 }
 
 func GetEdgeNodePublicIP(node *corev1.Node) (string, error) {
-	ip, ok := node.Labels[LabelNodeProviderPublicIP]
+	ip, ok := node.Labels[raven.LabelNodeProviderPublicIP]
 	if !ok {
-		return "", fmt.Errorf("failed to get public ip, no label %s on node %s", LabelNodeProviderPublicIP, node.Name)
+		return "", fmt.Errorf("failed to get public ip, no label %s on node %s", raven.LabelNodeProviderPublicIP, node.Name)
 	}
 	if net.ParseIP(ip) == nil {
-		return "", fmt.Errorf("failed to get public ip, invalid public IP label %s, %s on node %s", LabelNodeProviderPublicIP, ip, node.Name)
+		return "", fmt.Errorf("failed to get public ip, invalid public IP label %s, %s on node %s", raven.LabelNodeProviderPublicIP, ip, node.Name)
 	}
 	return ip, nil
+}
+
+func IsNodeEndpointCandidate(node *corev1.Node) bool {
+	value, ok := node.Labels[raven.LabelEndpointCandidate]
+	return ok && value == "true"
+}
+
+func TryCreateActiveEndpointCandidate(node *corev1.Node) (*ravenv1beta1.Endpoint, error) {
+	_, ok := node.Labels[raven.LabelEndpointCandidate]
+	if !ok {
+		return nil, fmt.Errorf("node does not have candidate label %s %v", raven.LabelEndpointCandidate, node.Labels)
+	}
+
+	publicIP, err := GetEdgeNodePublicIP(node)
+	if err != nil {
+		return nil, fmt.Errorf("node missing public ip with label %s: %w %v", raven.LabelNodeProviderPublicIP, err, node.Labels)
+	}
+	cfg := make(map[string]string)
+	cfg[ConfigCreationTimestampKey] = fmt.Sprintf("%d", node.CreationTimestamp.Unix())
+
+	return &ravenv1beta1.Endpoint{
+		NodeName: node.Name,
+		PublicIP: publicIP,
+		UnderNAT: false,
+		Type:     v1beta1.Tunnel,
+		Port:     v1beta1.DefaultTunnelServerExposedPort,
+		Config:   cfg,
+	}, nil
 }
 
 // AddGatewayToWorkQueue adds the Gateway the reconciler's workqueue

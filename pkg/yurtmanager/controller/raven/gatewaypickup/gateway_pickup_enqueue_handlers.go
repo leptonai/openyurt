@@ -68,13 +68,19 @@ func (e *EnqueueGatewayForNode) Update(evt event.UpdateEvent, q workqueue.RateLi
 	oldGwName := oldNode.Labels[raven.LabelCurrentGateway]
 	newGwName := newNode.Labels[raven.LabelCurrentGateway]
 
+	labelChanged := func(label string) bool {
+		return oldNode.Labels[label] != newNode.Labels[label]
+	}
+
 	// check if NodeReady condition changed
 	statusChanged := func(oldObj, newObj *corev1.Node) bool {
 		return isNodeReady(*oldObj) != isNodeReady(*newObj)
 	}
 
-	if oldGwName != newGwName || statusChanged(oldNode, newNode) {
+	if labelChanged(raven.LabelCurrentGateway) {
 		utils.AddGatewayToWorkQueue(oldGwName, q)
+		utils.AddGatewayToWorkQueue(newGwName, q)
+	} else if statusChanged(oldNode, newNode) || labelChanged(raven.LabelEndpointCandidate) || labelChanged(raven.LabelNodeProviderPublicIP) {
 		utils.AddGatewayToWorkQueue(newGwName, q)
 	}
 }
