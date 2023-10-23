@@ -14,7 +14,7 @@ image:
   registry: openyurt
   repository: yurt-manager
   tag: v1.3.4
-  pullPolicy: always
+  pullPolicy: Always
 
 ports:
   metrics: 10271

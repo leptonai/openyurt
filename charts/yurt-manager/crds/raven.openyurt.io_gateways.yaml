@@ -123,6 +123,9 @@ spec:
                         type: string
                       privateIP:
                         type: string
+                      publicIP:
+                        description: 'Node PublicIP: satellite nodes need to build vxlan connctions using their public IPs;'
+                        type: string
                       subnets:
                         items:
                           type: string

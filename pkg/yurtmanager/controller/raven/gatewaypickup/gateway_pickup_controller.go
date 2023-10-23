@@ -193,7 +193,7 @@ func (r *ReconcileGateway) Reconcile(ctx context.Context, req reconcile.Request)
 			return reconcile.Result{}, err
 		}
 		publicIP := ""
-		publicIP, err = utils.GetEdgeeNodePublicIP(v)
+		publicIP, err = utils.GetEdgeNodePublicIP(&v)
 		if err != nil {
 			klog.InfoS("unable to get node public IP, expecting nodes to communicate via private IPs: " + err.Error())
 		}
