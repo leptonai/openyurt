@@ -95,10 +95,13 @@ type Endpoint struct {
 type NodeInfo struct {
 	// NodeName is the Node host name.
 	NodeName string `json:"nodeName"`
-	// PrivateIP is the node private ip address
+	// PrivateIP is the node private ip address in lepton cluster
 	PrivateIP string `json:"privateIP"`
 	// Subnets is the pod ip range of the node
 	Subnets []string `json:"subnets"`
+	// Node PublicIP: satellite nodes need to build vxlan connctions
+	// using their public IPs;
+	PublicIP string `json:"publicIP,omitempty"`
 }
 
 // GatewayStatus defines the observed state of Gateway

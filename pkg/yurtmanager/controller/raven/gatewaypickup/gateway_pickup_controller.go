@@ -177,9 +177,10 @@ func (r *ReconcileGateway) Reconcile(ctx context.Context, req reconcile.Request)
 		err = fmt.Errorf("unable to list nodes: %s", err)
 		return reconcile.Result{}, err
 	}
-	klog.V(1).Info(Format("list gateway %d node %v", len(nodeList.Items), nodeList.Items))
+	klog.V(1).Info(Format("list gateway %d", len(nodeList.Items)))
 	// 1. try to elect an active endpoint if possible
 	activeEp := r.electActiveEndpoint(nodeList, &gw)
+	klog.V(1).Infof("Elected %d endpoint for gateway %s: %v", len(activeEp), gw.Name, activeEp)
 	r.recordEndpointEvent(&gw, gw.Status.ActiveEndpoints, activeEp)
 	gw.Status.ActiveEndpoints = activeEp
 	r.configEndpoints(ctx, &gw)
@@ -191,10 +192,16 @@ func (r *ReconcileGateway) Reconcile(ctx context.Context, req reconcile.Request)
 			klog.ErrorS(err, "unable to get podCIDR")
 			return reconcile.Result{}, err
 		}
+		publicIP := ""
+		publicIP, err = utils.GetEdgeNodePublicIP(&v)
+		if err != nil {
+			klog.InfoS("unable to get node public IP, expecting nodes to communicate via private IPs: " + err.Error())
+		}
 		nodes = append(nodes, ravenv1beta1.NodeInfo{
 			NodeName:  v.Name,
 			PrivateIP: utils.GetNodeInternalIP(v),
 			Subnets:   podCIDRs,
+			PublicIP:  publicIP,
 		})
 	}
 	sort.Slice(nodes, func(i, j int) bool { return nodes[i].NodeName < nodes[j].NodeName })
@@ -249,10 +256,11 @@ func (r *ReconcileGateway) electActiveEndpoint(nodeList corev1.NodeList, gw *rav
 			readyNodes[v.Name] = &v
 		}
 	}
-	klog.V(1).Infof(Format("Ready node has %d, node %v", len(readyNodes), readyNodes))
+	klog.V(1).Infof(Format("Ready node has %d", len(readyNodes)))
 	// init a endpoints slice
 	enableProxy, enableTunnel := utils.CheckServer(context.TODO(), r.Client)
 	eps := make([]*ravenv1beta1.Endpoint, 0)
+	klog.V(1).Info("enableProxy=%t, enableTunnel=%t", enableProxy, enableTunnel)
 	if enableProxy {
 		eps = append(eps, electEndpoints(gw, ravenv1beta1.Proxy, readyNodes)...)
 	}
@@ -264,6 +272,7 @@ func (r *ReconcileGateway) electActiveEndpoint(nodeList corev1.NodeList, gw *rav
 }
 
 func electEndpoints(gw *ravenv1beta1.Gateway, endpointType string, readyNodes map[string]*corev1.Node) []*ravenv1beta1.Endpoint {
+	klog.V(1).Infof("Electing endpoints for gateway %s with endpoint type %s", gw.Name, endpointType)
 	eps := make([]*ravenv1beta1.Endpoint, 0)
 	var replicas int
 	switch endpointType {

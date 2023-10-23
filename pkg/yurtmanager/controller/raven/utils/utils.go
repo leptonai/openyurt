@@ -40,6 +40,7 @@ const (
 	WorkingNamespace               = "kube-system"
 	RavenGlobalConfig              = "raven-cfg"
 	LabelCurrentGatewayEndpoints   = "raven.openyurt.io/endpoints-name"
+	LabelNodeProviderPublicIP      = "raven.openyurt.io/provider-public-ip"
 	GatewayProxyInternalService    = "x-raven-proxy-internal-svc"
 	GatewayProxyServiceNamePrefix  = "x-raven-proxy-svc"
 	GatewayTunnelServiceNamePrefix = "x-raven-tunnel-svc"
@@ -53,6 +54,8 @@ const (
 	VPNServerExposedPortKey    = "tunnel-bind-addr"
 	RavenEnableProxy           = "enable-l7-proxy"
 	RavenEnableTunnel          = "enable-l3-tunnel"
+	DefaultEnableL7Proxy       = false
+	DefaultEnableL3Tunnel      = true
 )
 
 // GetNodeInternalIP returns internal ip of the given `node`.
@@ -67,6 +70,17 @@ func GetNodeInternalIP(node corev1.Node) string {
 	return ip
 }
 
+func GetEdgeNodePublicIP(node *corev1.Node) (string, error) {
+	ip, ok := node.Labels[LabelNodeProviderPublicIP]
+	if !ok {
+		return "", fmt.Errorf("failed to get public ip, no label %s on node %s", LabelNodeProviderPublicIP, node.Name)
+	}
+	if net.ParseIP(ip) == nil {
+		return "", fmt.Errorf("failed to get public ip, invalid public IP label %s, %s on node %s", LabelNodeProviderPublicIP, ip, node.Name)
+	}
+	return ip, nil
+}
+
 // AddGatewayToWorkQueue adds the Gateway the reconciler's workqueue
 func AddGatewayToWorkQueue(gwName string,
 	q workqueue.RateLimitingInterface) {
@@ -79,8 +93,8 @@ func AddGatewayToWorkQueue(gwName string,
 
 func CheckServer(ctx context.Context, client client.Client) (enableProxy, enableTunnel bool) {
 	var cm corev1.ConfigMap
-	enableTunnel = false
-	enableProxy = false
+	enableTunnel = DefaultEnableL3Tunnel
+	enableProxy = DefaultEnableL7Proxy
 	err := client.Get(ctx, types.NamespacedName{Namespace: WorkingNamespace, Name: RavenGlobalConfig}, &cm)
 	if err != nil {
 		return enableProxy, enableTunnel

@@ -62,6 +62,7 @@ func (src *Gateway) ConvertTo(dstRaw conversion.Hub) error {
 			NodeName:  node.NodeName,
 			PrivateIP: node.PrivateIP,
 			Subnets:   node.Subnets,
+			PublicIP:  node.PublicIP,
 		})
 	}
 	if src.Status.ActiveEndpoint != nil {
@@ -102,6 +103,7 @@ func (dst *Gateway) ConvertFrom(srcRaw conversion.Hub) error {
 			NodeName:  node.NodeName,
 			PrivateIP: node.PrivateIP,
 			Subnets:   node.Subnets,
+			PublicIP:  node.PublicIP,
 		})
 	}
 	if src.Status.ActiveEndpoints == nil {
