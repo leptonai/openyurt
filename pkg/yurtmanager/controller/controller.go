@@ -27,7 +27,6 @@ import (
 
 	"github.com/openyurtio/openyurt/cmd/yurt-manager/app/config"
 	"github.com/openyurtio/openyurt/cmd/yurt-manager/names"
-	"github.com/openyurtio/openyurt/pkg/yurtmanager/controller/csrapprover"
 	"github.com/openyurtio/openyurt/pkg/yurtmanager/controller/daemonpodupdater"
 	"github.com/openyurtio/openyurt/pkg/yurtmanager/controller/nodepool"
 	"github.com/openyurtio/openyurt/pkg/yurtmanager/controller/platformadmin"
@@ -73,7 +72,6 @@ func NewControllerInitializers() map[string]InitFunc {
 		controllers[name] = fn
 	}
 
-	register(names.CsrApproverController, csrapprover.Add)
 	register(names.DaemonPodUpdaterController, daemonpodupdater.Add)
 	register(names.DelegateLeaseController, delegatelease.Add)
 	register(names.PodBindingController, podbinding.Add)
