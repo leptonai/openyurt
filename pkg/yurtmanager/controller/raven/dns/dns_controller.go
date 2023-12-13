@@ -161,7 +161,7 @@ func (r *ReconcileDns) Reconcile(ctx context.Context, req reconcile.Request) (re
 func (r ReconcileDns) getProxyDNS(ctx context.Context, objKey client.ObjectKey) (*corev1.ConfigMap, error) {
 	var cm corev1.ConfigMap
 	err := wait.PollImmediate(5*time.Second, time.Minute, func() (done bool, err error) {
-		err = r.Client.Get(ctx, objKey, &cm)
+		err = r.Client.Get(ctx, objKey, cm)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				err = r.buildRavenDNSConfigMap()
